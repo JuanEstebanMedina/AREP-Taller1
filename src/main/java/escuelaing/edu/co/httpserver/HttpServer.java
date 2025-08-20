@@ -16,15 +16,15 @@ public class HttpServer {
 
     public static Map<String, Service> services = new HashMap<String, Service>();
 
-    private static final Path ROOT = Paths.get("public").toAbsolutePath().normalize(); // /
+    private static Path ROOT = Paths.get("public").toAbsolutePath().normalize(); // /
 
-    public static void startServer(String[] args) throws IOException, URISyntaxException {
+    public static void startServer(int port) throws IOException, URISyntaxException {
         ServerSocket serverSocket = null;
         try {
-            serverSocket = new ServerSocket(35000);
-            System.out.println("Ready on: http://localhost:35000");
+            serverSocket = new ServerSocket(port);
+            System.out.println("Ready on: http://localhost:" + port);
         } catch (IOException e) {
-            System.err.println("Could not listen on port: 35000.");
+            System.err.println("Could not listen on port: " + port);
             System.exit(1);
         }
 
@@ -204,6 +204,6 @@ public class HttpServer {
     }
 
     public static void staticfiles(String route) {
-        return;
+        ROOT = Paths.get(route.replaceFirst("^/", "")).toAbsolutePath().normalize();
     }
 }
