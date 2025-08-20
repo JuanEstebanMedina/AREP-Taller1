@@ -4,6 +4,9 @@ import java.net.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import escuelaing.edu.co.httpserver.Service;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -11,9 +14,11 @@ import java.nio.file.*;
  */
 public class HttpServer {
 
-    private static final Path ROOT = Paths.get("public").toAbsolutePath().normalize();
+    public static Map<String, Service> services = new HashMap<String, Service>();
 
-    public static void main(String[] args) throws IOException, URISyntaxException {
+    private static final Path ROOT = Paths.get("public").toAbsolutePath().normalize(); // /
+
+    public static void startServer(String[] args) throws IOException, URISyntaxException {
         ServerSocket serverSocket = null;
         try {
             serverSocket = new ServerSocket(35000);
@@ -57,10 +62,11 @@ public class HttpServer {
                 }
             }
 
-            if (requesturi.getPath().startsWith("/api/hello")) {
-                outputLine = helloService(requesturi);
+            if (requesturi.getPath().startsWith("/api")) {
+                outputLine = processRequest(requesturi);
                 out.println(outputLine);
             } else {
+                // Leer del disco
                 Path file = mapToPublic(requesturi.getPath());
                 System.out.println(file.getFileName());
                 System.out.println(file.getParent());
@@ -86,6 +92,19 @@ public class HttpServer {
             clientSocket.close();
         }
         serverSocket.close();
+    }
+
+    private static String processRequest(URI requesturi) {
+        String serviceRoute = requesturi.getPath().substring(4);
+
+        Service service = services.get(serviceRoute);
+
+        HttpRequest req = new HttpRequest(requesturi);
+        HttpResponse res = new HttpResponse(requesturi);
+
+        String header = generalService("text/html");
+
+        return header + service.executeService(req, res);
     }
 
     private static Path mapToPublic(String path) {
@@ -175,8 +194,16 @@ public class HttpServer {
         }
         return "application/octet-stream";
     }
-    
+
     private static boolean isTextContentType(String contentType) {
         return contentType.startsWith("text/") || contentType.startsWith("application/javascript") || contentType.startsWith("application/json");
+    }
+
+    public static void get(String route, Service s) {
+        services.put(route, s);
+    }
+
+    public static void staticfiles(String route) {
+        return;
     }
 }
